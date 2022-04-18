@@ -1,0 +1,7 @@
+venv
+response-*
+__pycache__
+*.bin
+mine.sh
+private
+dumps
