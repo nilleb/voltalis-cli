@@ -1,8 +1,11 @@
 import json
+import logging
 import sys
+from typing import Callable
 import requests
 import urllib.parse
-from http.cookies import SimpleCookie
+
+logging.basicConfig(level=logging.INFO)
 
 
 class Modulator(object):
@@ -60,25 +63,6 @@ class Token(object):
         return TokenEncoder(token).as_cookie(subscriber_id)
 
 
-def login(username, password):
-    data = {
-        "id": "",
-        "alternative_email": "",
-        "email": "",
-        "firstname": "",
-        "lastname": "",
-        "login": "",
-        "password": password,
-        "phone": "",
-        "country": "",
-        "selectedSiteId": "",
-        "username": username,
-        "stayLoggedIn": "true",
-    }
-
-    return requests.post("https://myvoltalis.com/login", data=data)
-
-
 class VoltalisClient(object):
     def __init__(self, username, password) -> None:
         self.username = username
@@ -105,30 +89,44 @@ class VoltalisClient(object):
             cookie.name: cookie.value for cookie in self.login_response.cookies
         }
         self.token = Token(self.login_response.json())
+        self._log_response("/login.json", self.login_response)
 
     def sites(self):
         site_list = self.login_response.json().get("subscriber", {}).get("siteList", [])
         return [Site(site) for site in site_list]
 
-    def _call(self, uri, site_id):
+    @staticmethod
+    def _log_response(uri, response):
+        called = uri.split("/")[-1].split(".json")[0]
+
+        if response.status_code != 204:
+            with open(f"dumps/response-{called}.bin", "wb") as fd:
+                fd.write(response.content)
+            logging.info(f"{called} -> {response.status_code}")
+
+    def _call(self, uri, site_id, data=None):
         headers = {
             "User-Site-Id": str(site_id),
             "Accept": "application/json, text/plain, */*",
         }
 
+        if data:
+            headers["Content-Type"] = "application/json;charset=UTF-8"
+
         cookies = self.token.as_cookie()
         cookies.update(self.common_cookies)
 
-        response = requests.get(
+        method = requests.post if data else requests.get
+
+        response = method(
             uri,
             cookies=cookies,
             headers=headers,
+            json=data,
         )
-        called = uri.split("/")[-1].replace(".json", "")
-        if response.status_code != 204:
-            with open(f"dumps/response-{called}.bin", "wb") as fd:
-                fd.write(response.content)
-            print(json.dumps(response.json()))
+
+        self._log_response(uri, response)
+
         return response
 
     def lastMinuteConsumption(self, site_id):
@@ -142,6 +140,14 @@ class VoltalisClient(object):
     def siteMaxPower(self, site_id):
         # FIXME serialize dates
         uri = "https://myvoltalis.com/siteData/getSiteMaxPower.json?endDate=1648763999999&startDate=1617228000000"
+        return self._call(uri, site_id)
+
+    def absenceModeState(self, site_id):
+        uri = "https://myvoltalis.com/programmationEvent/getAbsenceModeState.json"
+        return self._call(uri, site_id)
+
+    def absenceState(self, site_id, modulator_id):
+        uri = f"https://myvoltalis.com/absence/getAbsenceState.json?csLinkId={modulator_id}"
         return self._call(uri, site_id)
 
     def onOffState(self, site_id, modulator_id):
@@ -180,25 +186,67 @@ class VoltalisClient(object):
         uri = "https://myvoltalis.com/chart/getCountryConsumptionMap.json?isWebView=false&mapType=annual&useLegend=true"
         self._call(uri, site_id)
 
+    @staticmethod
+    def _prepare_modulator_payload(modulator, turn_on_function: Callable):
+        return {
+            "name": modulator.name,
+            "csLinkId": modulator.uid,
+            "csLinkToCutId": modulator.uid,
+            "modulation": False,
+            "status": turn_on_function(modulator),
+            "isProgrammable": True,
+        }
+
+    def _prepare_update_on_off_payload(self, site_id, turn_on_function: Callable):
+        modulators_payload = []
+        for modulator in {site.uid: site for site in self.sites()}[site_id].modulators:
+            modulators_payload.append(
+                self._prepare_modulator_payload(modulator, turn_on_function)
+            )
+        return {"csLinkList": modulators_payload}
+
+    def updateOnOff(self, site_id, turn_on_function):
+        uri = "https://myvoltalis.com/programmationEvent/updateOnOffEvent"
+        data = self._prepare_update_on_off_payload(site_id, turn_on_function)
+        self._call(uri, site_id, data)
+
 
 def main(username, password):
     cli = VoltalisClient(username, password)
     cli.login()
     for site in cli.sites():
+        # en resumé
         cli.lastMinuteConsumption(site.uid)
         cli.immediateConsumptionInkW(site.uid)
         cli.siteMaxPower(site.uid)
         modulator = site.modulators[-1]
-        print(modulator.name)
+
+        # on/off
         cli.onOffState(site.uid, modulator.uid)
         cli.modulatorState(site.uid, modulator.uid)
+
+        # absence
+        cli.absenceModeState(site.uid)
+        cli.absenceState(site.uid, modulator.uid)
+
+        # mon planning
         cli.availableProgrammationMode(site.uid)
         cli.modeList(site.uid)
         cli.schedulerList(site.uid)
+
+        # en live
         cli.immediateConsumptionCharts(site.uid)
+
+        # sur l'année
         cli.annualConsumptionChartsCharts(site.uid)
         cli.totalModulatedPower(site.uid)
         cli.countryConsumptionMap(site.uid)
+
+        # turn on/off modulators
+        def turn_on_function(modulator: Modulator):
+            return "Salon" not in modulator.name
+
+        cli.updateOnOff(site.uid, turn_on_function=turn_on_function)
 
 
 if __name__ == "__main__":
