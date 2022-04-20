@@ -1,1 +1,1 @@
-python cli.py "tralala" "secret"
+python -m voltalis.cli "tralala" "secret"
