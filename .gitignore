@@ -5,5 +5,5 @@ __pycache__
 mine.sh
 private
 dumps
-.log
+*.log
 .DS_Store

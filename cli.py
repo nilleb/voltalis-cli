@@ -1,11 +1,23 @@
 import json
 import logging
+import logging.config
+import os
 import sys
 from typing import Callable
 import requests
 import urllib.parse
 
-logging.basicConfig(level=logging.INFO)
+
+def setup_logging_from_config(config_path):
+    if os.path.exists(config_path):
+        logging.config.fileConfig(config_path, disable_existing_loggers=False)
+    else:
+        logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    return logger
+
+
+setup_logging_from_config("samples/logging.ini")
 
 
 class Modulator(object):
@@ -188,6 +200,9 @@ class VoltalisClient(object):
 
     @staticmethod
     def _prepare_modulator_payload(modulator, turn_on_function: Callable):
+        if not turn_on_function:
+            turn_on_function = lambda x: True
+
         return {
             "name": modulator.name,
             "csLinkId": modulator.uid,
@@ -205,9 +220,16 @@ class VoltalisClient(object):
             )
         return {"csLinkList": modulators_payload}
 
-    def updateOnOff(self, site_id, turn_on_function):
+    def updateOnOff(self, site_id, data=None, turn_on_function=None):
         uri = "https://myvoltalis.com/programmationEvent/updateOnOffEvent"
-        data = self._prepare_update_on_off_payload(site_id, turn_on_function)
+
+        if not data:
+            data = self._prepare_update_on_off_payload(site_id, turn_on_function)
+
+        self._call(uri, site_id, data)
+
+    def updateModeConfig(self, site_id, data):
+        uri = "https://myvoltalis.com/scheduler/updateModeConfig"
         self._call(uri, site_id, data)
 
 
@@ -231,7 +253,7 @@ def main(username, password):
 
         # mon planning
         cli.availableProgrammationMode(site.uid)
-        cli.modeList(site.uid)
+        modes = cli.modeList(site.uid)
         cli.schedulerList(site.uid)
 
         # en live
@@ -242,11 +264,17 @@ def main(username, password):
         cli.totalModulatedPower(site.uid)
         cli.countryConsumptionMap(site.uid)
 
+        return
+
         # turn on/off modulators
         def turn_on_function(modulator: Modulator):
             return "Salon" not in modulator.name
 
         cli.updateOnOff(site.uid, turn_on_function=turn_on_function)
+
+        mode = next(modes.get("programmationModeList", []), None)
+        if mode:
+            cli.updateModeConfig(site.uid, mode)
 
 
 if __name__ == "__main__":
