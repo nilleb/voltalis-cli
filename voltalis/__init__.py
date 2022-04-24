@@ -1,12 +1,23 @@
 import logging
 from typing import Callable
 import requests
-from .types import Modulator, Token, Site
+from .types import (
+    CurrentProgrammationModeElement,
+    Modulator,
+    Scheduler,
+    Token,
+    Site,
+    ProgrammationMode,
+)
+
 
 class VoltalisClient(object):
     def __init__(self, username, password) -> None:
         self.username = username
         self.password = password
+        self.common_cookies = {}
+        self.login_response = None
+        self.token = None
 
     def login(self):
         data = {
@@ -120,11 +131,11 @@ class VoltalisClient(object):
 
     def totalModulatedPower(self, site_id):
         uri = "https://myvoltalis.com/siteData/getTotalModulatedPower.json?endDate=1648763999999&startDate=1617228000000"
-        self._call(uri, site_id)
+        return self._call(uri, site_id)
 
     def countryConsumptionMap(self, site_id):
         uri = "https://myvoltalis.com/chart/getCountryConsumptionMap.json?isWebView=false&mapType=annual&useLegend=true"
-        self._call(uri, site_id)
+        return self._call(uri, site_id)
 
     @staticmethod
     def _prepare_modulator_payload(modulator: Modulator, turn_on_function: Callable):
@@ -154,8 +165,72 @@ class VoltalisClient(object):
         if not data:
             data = self._prepare_update_on_off_payload(site_id, turn_on_function)
 
-        self._call(uri, site_id, data)
+        return self._call(uri, site_id, data)
 
     def updateModeConfig(self, site_id, data):
         uri = "https://myvoltalis.com/scheduler/updateModeConfig"
-        self._call(uri, site_id, data)
+        return self._call(uri, site_id, data)
+
+    def updateSchedulerConfig(self, site_id, data):
+        uri = "https://myvoltalis.com/scheduler/updateSchedulerConfig"
+        return self._call(uri, site_id, data)
+
+    def changeSchedulerState(self, site_id, data):
+        uri = "https://myvoltalis.com/scheduler/changeSchedulerState"
+        return self._call(uri, site_id, data)
+
+
+class ReasonedVoltalisClient(object):
+    def __init__(self, cli: VoltalisClient) -> None:
+        self.cli = cli
+
+        if not getattr(self.cli, "login_response"):
+            self.cli.login()
+
+        self._cache = {}
+
+    def key(self, method: Callable, args):
+        return "$".join([method.__name__] + [repr(arg) for arg in args])
+
+    # TODO https://stackoverflow.com/a/24778714
+    def memoized(self, method, *args):
+        key = self.key(method, args)
+        response = self._cache.get(key, None)
+        if not response:
+            response = method(*args)
+            self._cache[key] = response
+        return response
+
+    def get_mode_by_name(self, site_uid, name) -> ProgrammationMode:
+        response = self.memoized(self.cli.modeList, site_uid)
+        modes = response.json().get("programmationModeList", [])
+        matching_mode = None
+        for mode in modes:
+            typed_mode = ProgrammationMode.from_dict(mode)
+            if typed_mode.name == name:
+                matching_mode = typed_mode
+                break
+        return matching_mode
+
+    def get_scheduler_by_name(self, site_uid, name) -> ProgrammationMode:
+        response = self.memoized(self.cli.schedulerList, site_uid)
+        schedulers = response.json().get("schedulerList", [])
+        matching_scheduler = None
+        for scheduler in schedulers:
+            typed_scheduler = Scheduler.from_dict(scheduler)
+            if typed_scheduler.name == name:
+                matching_scheduler = typed_scheduler
+                break
+        return matching_scheduler
+
+    def get_available_modulator_modes_for(self, site_uid, modulator_type_id):
+        response = self.memoized(self.cli.availableProgrammationMode, site_uid)
+        available_modes = response.json().get("availableModesByModulatorType")
+        available_modes_for_this_modulator = available_modes.get(
+            str(modulator_type_id), []
+        )
+        available_modes_for_this_modulator = [
+            CurrentProgrammationModeElement.from_dict(mode)
+            for mode in available_modes_for_this_modulator
+        ]
+        return available_modes_for_this_modulator
