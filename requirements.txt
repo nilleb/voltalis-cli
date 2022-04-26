@@ -1,2 +1,1 @@
-requests
-python-json-logger
+-e .[build]

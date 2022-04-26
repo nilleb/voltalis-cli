@@ -7,3 +7,6 @@ private
 dumps
 *.log
 .DS_Store
+voltalis_cli.egg-info
+build
+dist

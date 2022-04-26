@@ -191,4 +191,4 @@ def set_all_eco(username, password):
 if __name__ == "__main__":
     username = sys.argv[1]
     password = sys.argv[2]
-    set_all_eco(username, password)
+    main(username, password)
