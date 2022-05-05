@@ -13,7 +13,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name='voltalis-cli',
-    version='0.0.1',
+    version='0.0.2',
     url='https://github.com/nilleb/voltalis-cli',
     author='Ivo Bellin Salarin',
     author_email='ivo@nilleb.com',
