@@ -21,7 +21,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=find_packages(),    
-    install_requires=['requests >= 1.11.1', 'matplotlib >= 1.5.1'],
+    install_requires=['requests >= 1.11.1'],
     extras_require = {
         'dev': ['black', 'isort', 'ipython', 'build', 'twine'],
         'build': ['requests']
