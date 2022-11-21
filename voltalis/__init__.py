@@ -35,12 +35,12 @@ class VoltalisClient(object):
             "stayLoggedIn": "true",
         }
 
-        self.login_response = requests.post("https://myvoltalis.com/login", data=data)
+        self.login_response = requests.post("https://classic.myvoltalis.com/login", data=data)
         self.common_cookies = {
             cookie.name: cookie.value for cookie in self.login_response.cookies
         }
-        self.token = Token(self.login_response.json())
         self._log_response("/login.json", self.login_response)
+        self.token = Token(self.login_response.json())
 
     def sites(self):
         site_list = self.login_response.json().get("subscriber", {}).get("siteList", [])
