@@ -3,7 +3,7 @@ import logging
 
 
 def call(path, method=None, json=None, headers=None):
-    method = method or ('POST' if json else 'GET')
+    method = method or ("POST" if json else "GET")
     headers = headers or {}
     headers["Content-Type"] = "application/json"
     return requests.request(
@@ -49,5 +49,51 @@ class VoltalisClient(object):
 
     def logout(self):
         headers = {"Authorization": f"Bearer {self.token}"}
-        response = call("auth/logout", method='DELETE', headers=headers)
+        response = call("auth/logout", method="DELETE", headers=headers)
         self._log_response("logout", response)
+
+    def get_quicksettings(
+        self,
+        site_id: int,
+    ):
+        headers = {"Authorization": f"Bearer {self.token}"}
+        response = call(f"api/site/{site_id}/quicksettings", headers=headers)
+        self._log_response("get_quicksettings", response)
+        return response.json()
+
+    def get_quicksetting(self, site_id: int, quicksetting_id: int):
+        headers = {"Authorization": f"Bearer {self.token}"}
+        response = call(
+            f"api/site/{site_id}/quicksettings/{quicksetting_id}", headers=headers
+        )
+        self._log_response("get_quicksetting", response)
+        return response.json()
+
+    def put_quicksetting(self, site_id: int, quicksetting_id: int, quicksetting: dict):
+        headers = {"Authorization": f"Bearer {self.token}"}
+        response = call(
+            f"api/site/{site_id}/quicksettings/{quicksetting_id}",
+            method="PUT",
+            headers=headers,
+            json=quicksetting,
+        )
+        self._log_response("put_quicksetting", response)
+        return response.json()
+
+    def enable_quicksetting(self, site_id: int, quicksetting_id: int):
+        headers = {"Authorization": f"Bearer {self.token}"}
+        json = {"enabled": True}
+        response = call(
+            f"api/site/{site_id}/quicksettings/{quicksetting_id}/enable",
+            method="PUT",
+            headers=headers,
+            json=json,
+        )
+        self._log_response("enable_quicksetting", response)
+        return response.json()
+
+    def get_managed_appliances(self, site_id: int):
+        headers = {"Authorization": f"Bearer {self.token}"}
+        response = call(f"api/site/{site_id}/managed-appliance", headers=headers)
+        self._log_response("get_managed_appliances", response)
+        return response.json()

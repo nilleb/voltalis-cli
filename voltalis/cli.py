@@ -20,7 +20,16 @@ setup_logging_from_config("samples/logging.ini")
 def main(username, password):
     cli = VoltalisClient(username, password)
     cli.login()
-    cli.me()
+    me = cli.me()
+    site_id = me.get('defaultSite', {}).get("id")
+    # me['otherSites']
+    quicksettings = cli.get_quicksettings(site_id)
+    logging.info(f"{len(quicksettings)} quick settings found for site {site_id} ({me['defaultSite']['address']})")
+    for setting in quicksettings:
+        logging.info(f"[{setting['enabled'] and 'x' or ' '}] {setting['name']} ({len(setting['appliancesSettings'])})")
+    managed_appliances = cli.get_managed_appliances(site_id)
+    for managed_appliance in managed_appliances:
+        logging.info(f"Managed appliance: {managed_appliance['name']} ({managed_appliance['applianceType']})")
     cli.logout()
 
 
