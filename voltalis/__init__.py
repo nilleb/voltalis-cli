@@ -16,7 +16,7 @@ def call(path, method=None, json=None, headers=None):
 
 
 class VoltalisClient(object):
-    def __init__(self, username, password, log_response_callback) -> None:
+    def __init__(self, username, password, log_response_callback=None) -> None:
         self.username = username
         self.password = password
         self.common_cookies = {}
