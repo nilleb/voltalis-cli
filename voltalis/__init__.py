@@ -16,12 +16,13 @@ def call(path, method=None, json=None, headers=None):
 
 
 class VoltalisClient(object):
-    def __init__(self, username, password) -> None:
+    def __init__(self, username, password, log_response_callback) -> None:
         self.username = username
         self.password = password
         self.common_cookies = {}
         self.login_response = None
         self.token = None
+        self.log_response_callback = log_response_callback
 
     def login(self):
         data = {
@@ -35,11 +36,12 @@ class VoltalisClient(object):
         self._log_response("login", self.login_response)
         self.token = self.login_response.json().get("token")
 
-    @staticmethod
-    def _log_response(uri: str, response: requests.Response):
-        if response.status_code != 204:
-            with open(f"dumps/response-{uri}.bin", "wb") as fd:
-                fd.write(response.content)
+    def _log_response(self, uri: str, response: requests.Response):
+        if self.log_response_callback:
+            self.log_response_callback(uri, response)
+        if response.status_code > 299:
+            logging.warning(f"{uri} -> {response.status_code}")
+        else:
             logging.info(f"{uri} -> {response.status_code}")
 
     def me(self):
