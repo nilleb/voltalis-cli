@@ -1,5 +1,6 @@
 import requests
 import logging
+from datetime import date
 
 
 def call(path, method=None, json=None, headers=None):
@@ -96,4 +97,20 @@ class VoltalisClient(object):
         headers = {"Authorization": f"Bearer {self.token}"}
         response = call(f"api/site/{site_id}/managed-appliance", headers=headers)
         self._log_response("get_managed_appliances", response)
+        return response.json()
+
+    def reset(self, site_id: int):
+        headers = {"Authorization": f"Bearer {self.token}"}
+        response = call(f"api/site/{site_id}/programming/reset", headers=headers)
+        self._log_response("reset", response)
+
+    def consumption_stats_per_hour(self, site_id: int, date: date):
+        date_formatted = date.strftime("%Y-%m-%d")
+        headers = {"Authorization": f"Bearer {self.token}"}
+
+        response = call(
+            f"api/site/{site_id}/consumption/week/{date_formatted}?aggregationType=BY_HOUR",
+            headers=headers,
+        )
+        self._log_response(f"consumption_stats_per_hour-{date_formatted}", response)
         return response.json()

@@ -12,18 +12,18 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
-    name='voltalis-cli',
-    version='0.0.2',
-    url='https://github.com/nilleb/voltalis-cli',
-    author='Ivo Bellin Salarin',
-    author_email='ivo@nilleb.com',
-    description='voltalis python client',
+    name="voltalis-cli",
+    version="1.1.0",
+    url="https://github.com/nilleb/voltalis-cli",
+    author="Ivo Bellin Salarin",
+    author_email="ivo@nilleb.com",
+    description="voltalis python client",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    packages=find_packages(),    
-    install_requires=['requests >= 1.11.1'],
-    extras_require = {
-        'dev': ['black', 'isort', 'ipython', 'build', 'twine'],
-        'build': ['requests']
-    }
+    packages=find_packages(),
+    install_requires=["requests >= 1.11.1"],
+    extras_require={
+        "dev": ["black", "isort", "ipython", "build", "twine", "python-json-logger"],
+        "build": ["requests"],
+    },
 )

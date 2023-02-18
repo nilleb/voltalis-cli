@@ -1,0 +1,24 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [     
+    {
+      "name": "Test cli",
+      "type": "python",
+      "request": "launch",
+      "module": "voltalis.cli",
+      "args": ["login", "password"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Test types",
+      "type": "python",
+      "request": "launch",
+      "module": "voltalis.types",
+      "justMyCode": true
+    }
+  ]
+}
