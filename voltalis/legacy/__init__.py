@@ -1,14 +1,10 @@
 import logging
 from typing import Callable
+
 import requests
-from .voltalis_types import (
-    CurrentProgrammationModeElement,
-    Modulator,
-    Scheduler,
-    Token,
-    Site,
-    ProgrammationMode,
-)
+
+from .voltalis_types import (CurrentProgrammationModeElement, Modulator,
+                             ProgrammationMode, Scheduler, Site, Token)
 
 
 class VoltalisClient(object):

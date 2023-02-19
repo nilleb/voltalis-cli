@@ -1,6 +1,7 @@
-import requests
 import logging
 from datetime import date
+
+import requests
 
 
 def call(path, method=None, json=None, headers=None):

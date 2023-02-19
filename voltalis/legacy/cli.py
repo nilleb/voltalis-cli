@@ -1,22 +1,14 @@
-from datetime import datetime
 import json
 import logging
 import logging.config
 import os
 import sys
+from datetime import datetime
 
-from .voltalis_types import (
-    Datum,
-    DayOfWeek,
-    Group,
-    Mode,
-    ModulatorState,
-    ProgrammationMode,
-    Scheduler,
-    TranslationKey,
-    Modulator,
-)
 from . import ReasonedVoltalisClient, VoltalisClient
+from .voltalis_types import (Datum, DayOfWeek, Group, Mode, Modulator,
+                             ModulatorState, ProgrammationMode, Scheduler,
+                             TranslationKey)
 
 
 def setup_logging_from_config(config_path):

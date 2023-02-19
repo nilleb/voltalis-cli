@@ -1,10 +1,8 @@
 import json
 import urllib.parse
-
-from enum import Enum
 from dataclasses import dataclass
-from typing import Any, Optional, List, TypeVar, Type, Callable, cast
 from enum import Enum
+from typing import Any, Callable, List, Optional, Type, TypeVar, cast
 
 
 class Modulator(object):

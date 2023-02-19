@@ -1,9 +1,10 @@
-import os
 import logging
 import logging.config
-from . import VoltalisClient
+import os
 import sys
 from datetime import date
+
+from . import VoltalisClient
 
 
 def setup_logging_from_config(config_path):
