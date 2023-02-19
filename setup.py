@@ -13,7 +13,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="voltalis-cli",
-    version="1.1.2",
+    version="1.2.0",
     url="https://github.com/nilleb/voltalis-cli",
     author="Ivo Bellin Salarin",
     author_email="ivo@nilleb.com",
@@ -24,6 +24,6 @@ setup(
     install_requires=["requests >= 1.11.1"],
     extras_require={
         "dev": ["black", "isort", "ipython", "build", "twine", "python-json-logger"],
-        "build": ["requests"],
+        "build": ["requests", "python-dateutil" "requests_cache", "pandas"],
     },
 )
