@@ -21,7 +21,11 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=find_packages(),
-    install_requires=["requests >= 1.11.1"],
+    install_requires=[
+        "requests >= 1.11.1",
+        "requests_cache >= 0.9.8",
+        "python-dateutil >= 2.7.3",
+    ],
     extras_require={
         "dev": ["black", "isort", "ipython", "build", "twine", "python-json-logger"],
         "build": ["requests", "python-dateutil" "requests_cache", "pandas"],
